@@ -1,0 +1,3 @@
+The National Cost Collection (NCC) publication comprises aggregated costs (the average unit cost of providing defined services to NHS patients in England) and patient-level costs/PLICS (a cost based on the specific interactions a patient has, and the events related to their healthcare activity).
+
+NHS providers submit costs annually. These costs are used to inform a number of work streams including the PLICS dashboards, the Model Health System, the Getting It Right First Time (GIRFT) programme and NHS Payment Scheme prices. They are a key source of information about the cost of NHS services.
