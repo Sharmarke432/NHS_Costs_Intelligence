@@ -1,257 +1,342 @@
 from pathlib import Path
+
 import streamlit as st
 
 
-# -----------------------------------------------------------------------------
-# Configuration
-# -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="NHS Cost Collection: EDA Dashboard",
-    page_icon="🏥",
+    page_title="What Can NHS Cost Data Tell Us?",
+    page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-BASE_DIR = Path(__file__).resolve().parent
-FIGURES_DIR = BASE_DIR / "figures"
+BASE_DIR = Path(__file__).parent
+FIGURE_DIR = BASE_DIR / "figures"
 
 FIGURES = {
-    "Top services by average unit cost": "top15_services_avg_cost.png",
-    "Provider costs vs national average": "provider_vs_national_sample.png",
-    "Services with highest cost variation": "top15_cv_services.png",
-    "NCCI distribution": "ncci_distribution.png",
-    "Average unit cost by MFF group": "mff_impact.png",
+    "Activity-weighted service costs": {
+        "file": "02_top_services_weighted_cost.jpg",
+        "description": (
+            "Services with the highest activity-weighted reported unit cost. "
+            "This is a descriptive cost benchmark, not an efficiency ranking."
+        ),
+    },
+    "Distribution overview": {
+        "file": "01_distribution_overview.jpg",
+        "description": (
+            "Activity, unit cost, actual cost, expected cost, variance and NCCI "
+            "are strongly skewed and contain influential extreme observations."
+        ),
+    },
+    "Cost-metric sensitivity": {
+        "file": "03_cost_metric_sensitivity.jpg",
+        "description": (
+            "Service comparisons change depending on whether the simple mean, "
+            "median or activity-weighted mean is used."
+        ),
+    },
+    "Provider cost versus activity": {
+        "file": "04_provider_cost_vs_activity.jpg",
+        "description": (
+            "Lower-activity providers show greater reported cost variability. "
+            "Potential outliers require investigation rather than automatic judgement."
+        ),
+    },
+    "Robust relative cost variation": {
+        "file": "05_robust_cost_variation.jpg",
+        "description": (
+            "Relative variation is measured using IQR divided by the median, "
+            "reducing sensitivity to extreme values."
+        ),
+    },
+    "Trimmed NCCI distribution": {
+        "file": "06_ncci_trimmed_distribution.jpg",
+        "description": (
+            "The 1st–99th percentile display shows the typical NCCI range. "
+            "Extreme values should remain available for audit."
+        ),
+    },
+    "Positive NCCI on a log scale": {
+        "file": "07_ncci_log_distribution.jpg",
+        "description": (
+            "Positive NCCI values span several orders of magnitude. "
+            "Zero and negative values require separate validation."
+        ),
+    },
+    "NCCI versus expected cost": {
+        "file": "08_ncci_vs_expected_cost.jpg",
+        "description": (
+            "NCCI appears more dispersed at lower expected costs, suggesting "
+            "a possible denominator or small-volume effect."
+        ),
+    },
+    "Variance distribution": {
+        "file": "09_variance_distribution.jpg",
+        "description": (
+            "Most records are close to zero variance, but substantial positive "
+            "and negative tails remain."
+        ),
+    },
+    "Mapping_Pot comparison": {
+        "file": "10_mapping_pot_cost_activity.jpg",
+        "description": (
+            "Mapping_Pot groups differ in cost and total activity. This is a "
+            "descriptive comparison and does not establish a causal MFF effect."
+        ),
+    },
 }
 
 
-# -----------------------------------------------------------------------------
-# Helpers
-# -----------------------------------------------------------------------------
-def show_figure(title: str, filename: str, explanation: str, interpretation: str, caution: str):
-    """Show a saved EDA figure with an explanation and interpretation."""
-    st.subheader(title)
+@st.cache_data
+def figure_path(filename: str) -> Path:
+    return FIGURE_DIR / filename
 
-    figure_path = FIGURES_DIR / filename
-    if figure_path.exists():
-        st.image(str(figure_path), use_container_width=True)
+
+def render_figure(name: str) -> None:
+    figure = FIGURES[name]
+    path = figure_path(figure["file"])
+
+    if path.exists():
+        st.image(str(path), use_container_width=True)
+        st.caption(figure["description"])
     else:
-        st.warning(
-            f"Figure not found: `{figure_path}`. "
-            "Run the EDA script first and ensure the PNG is saved in `figures/`."
-        )
-
-    left, right = st.columns(2)
-    with left:
-        st.markdown("### What this shows")
-        st.write(explanation)
-    with right:
-        st.markdown("### How to interpret it")
-        st.write(interpretation)
-
-    st.info(f"**Important caveat:** {caution}")
-    st.divider()
+        st.error(f"Figure not found: {path}")
+        st.code(f"Place the image at figures/{figure['file']}")
 
 
-# -----------------------------------------------------------------------------
-# Sidebar
-# -----------------------------------------------------------------------------
-st.sidebar.title("🏥 NHS Cost EDA")
-st.sidebar.markdown("**National Cost Collection 2024/25**")
-st.sidebar.markdown(
-    "This dashboard presents exploratory analysis of provider and service-level unit costs."
-)
-st.sidebar.divider()
-
-page = st.sidebar.radio(
-    "Navigate",
-    [
-        "Overview",
-        "Average service costs",
-        "Provider comparison",
-        "Cost variation",
-        "NCCI distribution",
-        "MFF groups",
-        "Presentation notes",
-    ],
-)
-
-st.sidebar.divider()
-st.sidebar.markdown("### Data notes")
-st.sidebar.markdown(
-    "- Costs are shown in GBP (£).\n"
-    "- The data is MFF-unadjusted.\n"
-    "- High cost does not automatically mean inefficiency.\n"
-    "- Results are descriptive, not causal."
-)
-
-
-# -----------------------------------------------------------------------------
-# Pages
-# -----------------------------------------------------------------------------
-if page == "Overview":
-    st.title("NHS National Cost Collection: EDA Dashboard")
-    st.markdown(
-        "This dashboard summarises exploratory data analysis of the **2024/25 NHS National Cost Collection** dataset. "
-        "It helps identify high-cost services, variation between providers, extreme NCCI values, and differences across MFF-related groups."
-    )
-
-    st.subheader("How to use this dashboard")
-    st.markdown(
-        "Use the navigation menu to view each EDA figure together with a plain-English explanation. "
-        "The purpose is to identify patterns and questions for deeper analysis—not to label providers as efficient or inefficient."
-    )
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Analysis level", "Provider × Service")
-    with col2:
-        st.metric("Financial year", "2024/25")
-    with col3:
-        st.metric("Cost basis", "MFF-unadjusted")
-
-    st.subheader("Key questions")
-    st.markdown(
-        "- Which services have the highest average unit costs?\n"
-        "- Which services have the largest differences in cost across providers?\n"
-        "- Are there unusual provider-level cost outliers?\n"
-        "- Does the NCCI variable contain extreme values requiring validation?\n"
-        "- How do average costs differ between the available MFF-related groups?"
-    )
-
+def render_disclaimer() -> None:
     st.warning(
-        "Before making benchmarking claims, investigate activity volumes, provider type, patient complexity, service mix, "
-        "costing methodology and extreme values."
+        "This dashboard presents descriptive evidence. It does not establish "
+        "provider efficiency, causality or poor performance. High cost and high "
+        "variation should be treated as signals for further investigation."
     )
 
-elif page == "Average service costs":
-    st.title("Average Unit Cost by Service")
-    show_figure(
-        title="Top 15 Services by National Average Unit Cost",
-        filename=FIGURES["Top services by average unit cost"],
-        explanation=(
-            "This horizontal bar chart ranks the 15 services with the highest average unit cost in the dataset. "
-            "Each bar represents the average cost of delivering one recorded unit of activity for that service across providers."
-        ),
-        interpretation=(
-            "Old Age Psychiatry is the highest average-cost service shown, at roughly £40,000 per unit in this analysis. "
-            "Other high-cost services include Child and Adolescent Psychiatry, cardiothoracic transplantation, and specialist paediatric surgery. "
-            "These are clinically complex or specialist services, so high unit cost is expected and is not itself evidence of poor efficiency."
-        ),
-        caution=(
-            "The chart uses unweighted mean unit cost. A service with a few low-volume, high-cost records can have a large mean. "
-            "Compare activity volume, median cost and weighted average cost before drawing conclusions."
-        ),
+
+st.title("What Can NHS Cost Data Tell Us About Variation in Service Costs?")
+st.markdown(
+    "**NHS National Cost Collection 2024/25**  \n"
+    "An exploratory analysis of activity-weighted benchmarks, provider variation, "
+    "cost metrics and NCCI distributions."
+)
+
+with st.sidebar:
+    st.header("Dashboard navigation")
+    page = st.radio(
+        "Go to",
+        [
+            "Overview",
+            "Service costs",
+            "Provider variation",
+            "NCCI and variance",
+            "Mapping_Pot groups",
+            "Evidence and limitations",
+        ],
     )
 
-elif page == "Provider comparison":
-    st.title("Provider Costs vs National Average")
-    show_figure(
-        title="Provider Unit Costs: Old Age Psychiatry",
-        filename=FIGURES["Provider costs vs national average"],
-        explanation=(
-            "This histogram shows the distribution of provider unit costs for the selected service, Old Age Psychiatry. "
-            "The dashed red line represents the average unit cost across the providers in the dataset."
-        ),
-        interpretation=(
-            "The distribution is strongly right-skewed: most observations are at the low end, while a small number are much higher. "
-            "Those high-cost observations pull the national average to approximately £39,818. The chart is useful for identifying outliers "
-            "that may deserve further review."
-        ),
-        caution=(
-            "Do not assume high-cost providers are inefficient. The values may reflect low activity, specialist case mix, different care models, "
-            "or costing/reporting differences. Investigate the underlying activity and actual-cost values first."
-        ),
+    st.divider()
+    st.caption("Data scope")
+    st.write("Cleaned NCC 2024/25 data")
+    st.write("MFF-unadjusted")
+    st.write("Approximately 38,562 numeric records")
+
+if page == "Overview":
+    st.header("Overview")
+    st.write(
+        "This dashboard investigates how reported NHS service costs vary across "
+        "services, providers and descriptive grouping variables. It focuses on "
+        "robust summaries rather than relying on simple means alone."
     )
 
-elif page == "Cost variation":
-    st.title("Cost Variation by Service")
-    show_figure(
-        title="Top 15 Services by Coefficient of Variation",
-        filename=FIGURES["Services with highest cost variation"],
-        explanation=(
-            "This chart ranks services by their coefficient of variation (CV), calculated as standard deviation divided by mean unit cost. "
-            "A higher CV means provider costs vary more relative to the average cost for that service."
-        ),
-        interpretation=(
-            "The Unknown category has the highest variation, followed by Paediatric Dermatology, Chemical Pathology, Community Dental Services, "
-            "Dietetics and Podiatry. These services are candidates for deeper investigation because their costs differ greatly across providers."
-        ),
-        caution=(
-            "High variation is a signal for investigation, not proof of inefficiency. It can be caused by small volumes, patient complexity, "
-            "different delivery models, data-quality issues or inconsistent costing. The '999 - Unknown' category should be reviewed separately."
-        ),
+    metric_1, metric_2, metric_3, metric_4 = st.columns(4)
+    metric_1.metric("Numeric records", "~38,562")
+    metric_2.metric("Median NCCI", "96")
+    metric_3.metric("NCCI p99", "~419")
+    metric_4.metric("Median variance", "−£3,295")
+
+    st.subheader("Questions explored")
+    questions = [
+        "Which services have the highest activity-weighted reported unit costs?",
+        "How much do service comparisons change when the cost metric changes?",
+        "Does reported provider cost become more variable at low activity?",
+        "Which services show the greatest relative variation?",
+        "How dispersed are NCCI and actual-versus-expected cost values?",
+        "How do Mapping_Pot groups differ descriptively in cost and activity?",
+    ]
+    for question in questions:
+        st.markdown(f"- {question}")
+
+    st.subheader("Main descriptive findings")
+    findings = [
+        "Activity, cost and NCCI distributions are strongly right-skewed.",
+        "Simple means can be substantially different from medians and activity-weighted means.",
+        "Low-activity providers tend to have more unstable reported unit costs.",
+        "Specialist services often appear among high-cost or high-variation categories.",
+        "NCCI has a long right tail and needs validation before being used as an efficiency measure.",
+    ]
+    for finding in findings:
+        st.markdown(f"- {finding}")
+
+    render_disclaimer()
+
+elif page == "Service costs":
+    st.header("Service cost benchmarks")
+    st.write(
+        "These figures compare reported service costs using activity-weighted "
+        "benchmarks and show how the choice of metric changes the comparison."
     )
 
-elif page == "NCCI distribution":
-    st.title("NCCI Distribution")
-    show_figure(
-        title="Distribution of National Cost Collection Index",
-        filename=FIGURES["NCCI distribution"],
-        explanation=(
-            "This histogram displays the spread of NCCI values across the dataset. NCCI is intended to compare costs relative to an expected or benchmark cost."
-        ),
-        interpretation=(
-            "The figure is extremely right-skewed. Most values cluster close to zero on this scale, while a small number of very large values stretch the x-axis. "
-            "This suggests that extreme observations are dominating the visualisation."
-        ),
-        caution=(
-            "Validate the definition and scale of NCCI in this file before interpreting it as an efficiency measure. Check minimum, maximum, median, "
-            "the 99th percentile, zero values and whether very small expected costs create artificially large ratios. A log-scale or percentile-trimmed chart would be clearer."
-        ),
+    tabs = st.tabs(["Weighted costs", "Metric sensitivity", "Distributions"])
+    with tabs[0]:
+        render_figure("Activity-weighted service costs")
+    with tabs[1]:
+        render_figure("Cost-metric sensitivity")
+    with tabs[2]:
+        render_figure("Distribution overview")
+
+    st.subheader("Interpretation")
+    st.write(
+        "Activity-weighted cost is the preferred high-level benchmark because it "
+        "reflects the contribution of activity volume. The median remains useful "
+        "for describing a typical provider-record observation. A simple mean is "
+        "best treated as a diagnostic because extreme values can dominate it."
+    )
+    render_disclaimer()
+
+elif page == "Provider variation":
+    st.header("Provider activity and cost variation")
+    st.write(
+        "The provider-level figure examines whether reported unit costs become "
+        "more dispersed when providers have low activity."
     )
 
-elif page == "MFF groups":
-    st.title("Average Unit Cost by MFF Group")
-    show_figure(
-        title="Average Unit Cost by MFF-Related Group",
-        filename=FIGURES["Average unit cost by MFF group"],
-        explanation=(
-            "This bar chart compares average unit costs across the `Mapping_Pot` groups in the data. "
-            "It provides a descriptive view of how recorded costs differ across the available MFF-related categories."
-        ),
-        interpretation=(
-            "The groups labelled `02_NEI` and `01_EI` show the highest average unit costs in this analysis, while categories such as `10_PAR`, `11_A&E` and `05_OP` are lower. "
-            "This indicates meaningful differences between groups, potentially due to service mix, location-related pressures or the way activity is grouped."
-        ),
-        caution=(
-            "`Mapping_Pot` is not necessarily a binary MFF indicator. This chart does not prove that MFF causes the cost differences; it does not control for service type, provider type, activity or patient complexity."
-        ),
+    render_figure("Provider cost versus activity")
+    render_figure("Robust relative cost variation")
+
+    st.subheader("Interpretation")
+    st.write(
+        "The figures suggest that low activity is associated with greater cost "
+        "instability. This is consistent with a denominator effect, where a small "
+        "number of cases can substantially change a reported unit cost. It does "
+        "not demonstrate that higher-cost providers are inefficient."
+    )
+    render_disclaimer()
+
+elif page == "NCCI and variance":
+    st.header("NCCI and actual-versus-expected cost")
+    st.write(
+        "This section treats NCCI and variance as validation and diagnostic "
+        "variables rather than direct efficiency scores."
     )
 
-elif page == "Presentation notes":
-    st.title("Mentor Presentation Notes")
+    tabs = st.tabs(["NCCI distribution", "NCCI scale", "NCCI and expected cost", "Variance"])
+    with tabs[0]:
+        render_figure("Trimmed NCCI distribution")
+    with tabs[1]:
+        render_figure("Positive NCCI on a log scale")
+    with tabs[2]:
+        render_figure("NCCI versus expected cost")
+    with tabs[3]:
+        render_figure("Variance distribution")
 
-    st.subheader("Suggested opening")
-    st.markdown(
-        "> “I conducted exploratory analysis on the 2024/25 NHS National Cost Collection data at provider and service level. "
-        "The goal was to identify high-cost services, services with large cost variation between providers, and data patterns that need deeper validation before benchmarking.”"
+    st.subheader("Interpretation")
+    st.write(
+        "NCCI has a typical central range but a long positive tail. The wider "
+        "dispersion at lower expected costs suggests that small denominators may "
+        "contribute to unstable index values. This hypothesis requires validation "
+        "using the underlying formula and record-level data."
     )
 
-    st.subheader("Headline findings")
-    st.markdown(
-        "1. Specialist mental-health, transplant and paediatric surgery services have the highest average unit costs.\n"
-        "2. Several services show substantial provider-level variation, especially Paediatric Dermatology, Chemical Pathology and Community Dental Services.\n"
-        "3. Old Age Psychiatry has a right-skewed provider-cost distribution, with a few very high values affecting the average.\n"
-        "4. NCCI has extreme values, so it needs data validation before being used for efficiency conclusions.\n"
-        "5. Average costs differ across the available Mapping_Pot/MFF-related groups, but this is descriptive rather than causal."
+    st.subheader("Validation checks required")
+    checks = [
+        "Confirm the exact NCCI formula and scale.",
+        "Count missing, zero and negative NCCI values.",
+        "Review the highest NCCI records individually.",
+        "Assess sensitivity to small expected costs.",
+        "Reconcile Actual_Cost, Expected_Cost and Variance definitions.",
+    ]
+    for check in checks:
+        st.markdown(f"- {check}")
+    render_disclaimer()
+
+elif page == "Mapping_Pot groups":
+    st.header("Descriptive Mapping_Pot comparison")
+    st.write(
+        "This figure compares activity-weighted unit cost and total activity across "
+        "Mapping_Pot groups. Differences should be interpreted descriptively only."
     )
 
-    st.subheader("Important limitations")
-    st.markdown(
-        "- A high cost may be clinically appropriate for complex care.\n"
-        "- Mean unit cost can be distorted by outliers and low-volume records.\n"
-        "- Provider comparisons should account for activity volume, case mix and provider type.\n"
-        "- The current data is MFF-unadjusted.\n"
-        "- The `999 - Unknown` service category requires data-quality review."
+    render_figure("Mapping_Pot comparison")
+
+    st.subheader("What may explain group differences?")
+    explanations = [
+        "Different service mixes.",
+        "Different provider mixes.",
+        "Differences in patient complexity.",
+        "Regional or organisational variation.",
+        "Different activity distributions.",
+        "Cost allocation and reporting differences.",
+    ]
+    for explanation in explanations:
+        st.markdown(f"- {explanation}")
+
+    st.info(
+        "Mapping_Pot is used here as a descriptive grouping variable. The figure "
+        "does not establish that an MFF-related factor causes the observed cost differences."
     )
 
-    st.subheader("Recommended next steps")
-    st.markdown(
-        "1. Add activity-volume thresholds before ranking providers or services.\n"
-        "2. Calculate median, weighted mean and percentile-based unit costs.\n"
-        "3. Investigate extreme NCCI values and document the NCCI calculation.\n"
-        "4. Segment providers into comparable groups before benchmarking.\n"
-        "5. Build interactive filters around provider, department, service, activity and cost metrics."
+elif page == "Evidence and limitations":
+    st.header("Evidence and limitations")
+
+    st.subheader("Conclusions supported by the figures")
+    supported = [
+        "Reported NHS cost variables are highly skewed and contain extreme observations.",
+        "Cost comparisons are sensitive to the chosen summary statistic.",
+        "Activity-weighted benchmarks and medians are more informative than simple means alone.",
+        "Low-activity provider costs appear more variable.",
+        "NCCI has a long right tail and appears more dispersed at lower expected costs.",
+    ]
+    for item in supported:
+        st.markdown(f"- {item}")
+
+    st.subheader("Conclusions not supported by the figures")
+    unsupported = [
+        "That a high-cost service or provider is inefficient.",
+        "That high variation proves poor performance.",
+        "That Mapping_Pot differences represent a causal MFF effect.",
+        "That raw NCCI rankings are validated efficiency scores.",
+        "That negative or extreme values are necessarily genuine clinical costs.",
+    ]
+    for item in unsupported:
+        st.markdown(f"- {item}")
+
+    st.subheader("Data-quality issues to review")
+    quality_items = [
+        "Negative Unit_Cost and Actual_Cost values.",
+        "Zero or negative NCCI values.",
+        "Very small Expected_Cost denominators.",
+        "Extreme NCCI and cost observations.",
+        "The 999 - Unknown service category.",
+        "Differences between weighted Unit_Cost and Actual_Cost divided by Activity.",
+    ]
+    for item in quality_items:
+        st.markdown(f"- {item}")
+
+    st.subheader("Presentation-ready conclusion")
+    st.success(
+        "The analysis shows that reported NHS service costs vary substantially and "
+        "that comparisons are sensitive to activity volume and the selected cost "
+        "metric. Activity-weighted and robust measures provide more informative "
+        "descriptive benchmarks than simple means alone. However, specialist case "
+        "mix, provider context and data-quality issues mean that high cost or high "
+        "variation cannot be interpreted as inefficiency. NCCI has a long right tail "
+        "and requires further validation before it can be used as an efficiency "
+        "measure. The figures therefore identify areas for investigation rather than "
+        "making provider-performance judgements."
     )
 
-st.caption("Data source: NHS National Cost Collection 2024/25. This dashboard is exploratory and should not be used as a standalone performance assessment.")
+    render_disclaimer()
+
+st.divider()
+st.caption(
+    "Exploratory analysis only | NHS NCC 2024/25 | Validate data definitions and account for case mix before making stronger claims"
+)
