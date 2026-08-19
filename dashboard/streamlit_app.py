@@ -89,7 +89,7 @@ FIGURES = {
 
 @st.cache_data
 def figure_path(filename: str) -> Path:
-    return FIGURE_DIR / filename
+    return FIGURES_DIR / filename
 
 
 def render_figure(name: str) -> None:
