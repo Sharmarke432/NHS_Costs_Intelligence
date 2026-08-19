@@ -13,7 +13,7 @@ st.set_page_config(
 )
 
 BASE_DIR = Path(__file__).resolve().parent
-FIGURES_DIR = BASE_DIR / "figures"
+FIGURES_DIR = BASE_DIR / "Figures"
 
 FIGURES = {
     "Top services by average unit cost": "top15_services_avg_cost.png",
