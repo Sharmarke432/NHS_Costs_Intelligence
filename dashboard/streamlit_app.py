@@ -16,70 +16,70 @@ FIGURES_DIR = REPO_ROOT / "Figures"
 
 FIGURES = {
     "Activity-weighted service costs": {
-        "file": "02_top_services_weighted_cost.jpg",
+        "file": "02_top_services_weighted_cost.png",
         "description": (
             "Services with the highest activity-weighted reported unit cost. "
             "This is a descriptive cost benchmark, not an efficiency ranking."
         ),
     },
     "Distribution overview": {
-        "file": "01_distribution_overview.jpg",
+        "file": "01_distribution_overview.png",
         "description": (
             "Activity, unit cost, actual cost, expected cost, variance and NCCI "
             "are strongly skewed and contain influential extreme observations."
         ),
     },
     "Cost-metric sensitivity": {
-        "file": "03_cost_metric_sensitivity.jpg",
+        "file": "03_cost_metric_sensitivity.png",
         "description": (
             "Service comparisons change depending on whether the simple mean, "
             "median or activity-weighted mean is used."
         ),
     },
     "Provider cost versus activity": {
-        "file": "04_provider_cost_vs_activity.jpg",
+        "file": "04_provider_cost_vs_activity.png",
         "description": (
             "Lower-activity providers show greater reported cost variability. "
             "Potential outliers require investigation rather than automatic judgement."
         ),
     },
     "Robust relative cost variation": {
-        "file": "05_robust_cost_variation.jpg",
+        "file": "05_robust_cost_variation.png",
         "description": (
             "Relative variation is measured using IQR divided by the median, "
             "reducing sensitivity to extreme values."
         ),
     },
     "Trimmed NCCI distribution": {
-        "file": "06_ncci_trimmed_distribution.jpg",
+        "file": "06_ncci_trimmed_distribution.png",
         "description": (
             "The 1st–99th percentile display shows the typical NCCI range. "
             "Extreme values should remain available for audit."
         ),
     },
     "Positive NCCI on a log scale": {
-        "file": "07_ncci_log_distribution.jpg",
+        "file": "07_ncci_log_distribution.png",
         "description": (
             "Positive NCCI values span several orders of magnitude. "
             "Zero and negative values require separate validation."
         ),
     },
     "NCCI versus expected cost": {
-        "file": "08_ncci_vs_expected_cost.jpg",
+        "file": "08_ncci_vs_expected_cost.png",
         "description": (
             "NCCI appears more dispersed at lower expected costs, suggesting "
             "a possible denominator or small-volume effect."
         ),
     },
     "Variance distribution": {
-        "file": "09_variance_distribution.jpg",
+        "file": "09_variance_distribution.png",
         "description": (
             "Most records are close to zero variance, but substantial positive "
             "and negative tails remain."
         ),
     },
     "Mapping_Pot comparison": {
-        "file": "10_mapping_pot_cost_activity.jpg",
+        "file": "10_mapping_pot_cost_activity.png",
         "description": (
             "Mapping_Pot groups differ in cost and total activity. This is a "
             "descriptive comparison and does not establish a causal MFF effect."
