@@ -334,13 +334,10 @@ elif page == "Evidence and limitations":
         "making provider-performance judgements."
     )
 
-<<<<<<< HEAD
     render_disclaimer()
 
 st.divider()
 st.caption(
     "Exploratory analysis only | NHS NCC 2024/25 | Validate data definitions and account for case mix before making stronger claims"
 )
-=======
 st.caption("Data source: NHS National Cost Collection 2024/25. This dashboard is exploratory and should not be used as a standalone performance assessment.")
->>>>>>> 63218049e108b3de3edcb822fb946b2f9c4bb547
