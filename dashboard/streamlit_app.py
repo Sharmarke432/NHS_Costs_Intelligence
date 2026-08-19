@@ -10,7 +10,7 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = src/nhs_costs_intelligence/
 FIGURES_DIR = BASE_DIR / "Figures"
 
 FIGURES = {
