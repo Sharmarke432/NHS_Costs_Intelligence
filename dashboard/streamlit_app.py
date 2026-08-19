@@ -98,7 +98,7 @@ def render_figure(name: str) -> None:
     path = figure_path(figure["file"])
 
     if path.exists():
-        st.image(str(path), use_container_width=True)
+        st.image(str(path), width=800)
         st.caption(figure["description"])
     else:
         st.error(f"Figure not found: {path}")
