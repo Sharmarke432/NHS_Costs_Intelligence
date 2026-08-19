@@ -10,8 +10,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-BASE_DIR = src/nhs_costs_intelligence/
-FIGURES_DIR = BASE_DIR / "Figures"
+APP_DIR = Path(__file__).resolve().parent
+REPO_ROOT = APP_DIR.parent
+FIGURES_DIR = REPO_ROOT / "Figures"
 
 FIGURES = {
     "Activity-weighted service costs": {
